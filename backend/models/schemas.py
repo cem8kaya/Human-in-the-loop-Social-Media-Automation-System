@@ -58,6 +58,11 @@ class PostOut(PostBase):
     posted_at: Optional[datetime]
     created_at: datetime
     updated_at: datetime
+    # AutoPilot fields
+    viral_format: Optional[str] = None
+    confidence_score: Optional[float] = None
+    auto_approved: bool = False
+    predicted_engagement_score: Optional[float] = None
 
     class Config:
         from_attributes = True
@@ -124,3 +129,18 @@ class PaginatedPosts(BaseModel):
     page: int
     page_size: int
     pages: int
+
+
+# ── SystemConfig ───────────────────────────────────────────────────────────
+
+class SystemConfigOut(BaseModel):
+    autopilot_enabled: bool
+    autopilot_confidence_threshold: float
+
+    class Config:
+        from_attributes = True
+
+
+class SystemConfigUpdate(BaseModel):
+    autopilot_enabled: Optional[bool] = None
+    autopilot_confidence_threshold: Optional[float] = None

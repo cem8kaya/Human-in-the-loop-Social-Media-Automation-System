@@ -1,5 +1,5 @@
 from datetime import datetime
-from sqlalchemy import Column, Integer, String, Text, Float, DateTime, Boolean, ForeignKey, JSON
+from sqlalchemy import Column, Integer, String, Text, Float, DateTime, Boolean, ForeignKey, JSON, Date
 from sqlalchemy.orm import relationship
 from models.database import Base
 
@@ -33,6 +33,12 @@ class Post(Base):
     # Targeting
     platform = Column(String(50), default="twitter")   # twitter, instagram, tiktok
     account_id = Column(String(100), nullable=True)    # multi-account support
+
+    # AutoPilot
+    viral_format = Column(String(50), nullable=True)
+    confidence_score = Column(Float, nullable=True)
+    auto_approved = Column(Boolean, default=False)
+    predicted_engagement_score = Column(Float, nullable=True)
 
     # Status flow: generated → pending_review → approved → scheduled → posted
     status = Column(String(30), default="generated")
@@ -85,3 +91,27 @@ class Account(Base):
     credentials = Column(JSON, default=dict)   # encrypted in prod
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime, default=datetime.utcnow)
+
+
+class SystemConfig(Base):
+    """Key-value store for runtime system settings (autopilot, thresholds, etc.)."""
+    __tablename__ = "system_config"
+
+    id = Column(Integer, primary_key=True, index=True)
+    key = Column(String(100), unique=True, nullable=False, index=True)
+    value = Column(JSON, nullable=False)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+
+class PostingPerformance(Base):
+    """Per-(platform, hour_of_day) engagement tracking for data-driven optimal posting times."""
+    __tablename__ = "posting_performance"
+
+    id = Column(Integer, primary_key=True, index=True)
+    account_id = Column(String(100), nullable=True, index=True)
+    platform = Column(String(50), nullable=False)
+    hour_of_day = Column(Integer, nullable=False)   # 0-23 UTC
+    day_of_week = Column(Integer, nullable=True)    # 0=Mon … 6=Sun
+    sample_count = Column(Integer, default=0)
+    avg_engagement = Column(Float, default=0.0)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
