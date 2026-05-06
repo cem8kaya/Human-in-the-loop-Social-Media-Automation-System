@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+dist/
+build/
+*.egg
+.pytest_cache/
+
+# Environment
+.env
+!.env.example
+
+# Node
+node_modules/
+.next/
+out/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Docker volumes (local dev)
+pgdata/
+redisdata/
+
+# Media assets
+/tmp/social_media_assets/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# macOS
+.DS_Store
+
+# Logs
+*.log
+celerybeat-schedule
+celerybeat.pid

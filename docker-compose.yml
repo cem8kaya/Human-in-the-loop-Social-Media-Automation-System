@@ -1,0 +1,122 @@
+version: "3.9"
+
+services:
+  # ── Infrastructure ────────────────────────────────────────────────────────
+
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: social_automation
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    volumes:
+      - redisdata:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  ollama:
+    image: ollama/ollama:latest
+    volumes:
+      - ollamadata:/root/.ollama
+    ports:
+      - "11434:11434"
+    # Pull llama3 on first run (optional — comment out if you prefer manual pull)
+    # entrypoint: ["/bin/sh", "-c", "ollama serve & sleep 5 && ollama pull llama3 && wait"]
+
+  # ── Backend ───────────────────────────────────────────────────────────────
+
+  backend:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.backend
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/social_automation
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+      OLLAMA_BASE_URL: http://ollama:11434
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - media:/tmp/social_media_assets
+    restart: unless-stopped
+
+  # ── Celery Workers ────────────────────────────────────────────────────────
+
+  worker:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.worker
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/social_automation
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+      OLLAMA_BASE_URL: http://ollama:11434
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    volumes:
+      - media:/tmp/social_media_assets
+    restart: unless-stopped
+
+  beat:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.worker
+    command: celery -A workers.celery_app beat --loglevel=info
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://postgres:postgres@db:5432/social_automation
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/1
+      OLLAMA_BASE_URL: http://ollama:11434
+    depends_on:
+      - redis
+      - backend
+    restart: unless-stopped
+
+  # ── Frontend ──────────────────────────────────────────────────────────────
+
+  frontend:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.frontend
+      args:
+        NEXT_PUBLIC_API_URL: http://localhost:8000
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  redisdata:
+  ollamadata:
+  media:
