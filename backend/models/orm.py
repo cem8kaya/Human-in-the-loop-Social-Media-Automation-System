@@ -4,6 +4,32 @@ from sqlalchemy.orm import relationship
 from models.database import Base
 
 
+class App(Base):
+    """A mobile app or game being promoted through the system."""
+    __tablename__ = "apps"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(200), nullable=False)
+    platform = Column(String(20), default="both")      # ios | android | both
+    app_store_url = Column(Text, nullable=True)
+    play_store_url = Column(Text, nullable=True)
+    bundle_id = Column(String(200), nullable=True, index=True)
+    description = Column(Text, nullable=True)
+    tagline = Column(String(500), nullable=True)
+    target_audience = Column(String(200), nullable=True)
+    genre = Column(String(100), nullable=True)
+    launch_date = Column(Date, nullable=True)
+    screenshots_dir = Column(Text, nullable=True)
+    promo_video_url = Column(Text, nullable=True)
+    is_active = Column(Boolean, default=True)
+    raw_store_data = Column(JSON, default=dict)        # populated by appstore_scraper
+    voice_profile = Column(JSON, default=dict)         # brand voice (tone, avoid_words, etc.)
+    created_at = Column(DateTime, default=datetime.utcnow)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    posts = relationship("Post", back_populates="app")
+
+
 class Trend(Base):
     __tablename__ = "trends"
 
@@ -22,6 +48,7 @@ class Post(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     trend_id = Column(Integer, ForeignKey("trends.id"), nullable=True)
+    app_id = Column(Integer, ForeignKey("apps.id"), nullable=True)
 
     # Content
     hook = Column(Text)
@@ -57,6 +84,7 @@ class Post(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     trend = relationship("Trend", back_populates="posts")
+    app = relationship("App", back_populates="posts")
     analytics = relationship("Analytics", back_populates="post", uselist=False)
 
 

@@ -3,7 +3,7 @@ Reusable, configurable prompt templates for viral content generation.
 Each template accepts a context dict and returns a formatted string.
 """
 
-from typing import Dict
+from typing import Any, Dict, Optional
 
 # ── Viral format definitions ───────────────────────────────────────────────
 
@@ -127,3 +127,60 @@ def build_improvement_prompt(topic: str, source: str, top_performers: str, low_p
         top_performers=top_performers,
         low_performers=low_performers,
     )
+
+
+# ── App context injection ──────────────────────────────────────────────────
+
+def build_app_context(app: Any) -> str:
+    """Return a prompt preamble that grounds content generation in a specific app.
+
+    Accepts either an ORM App instance or a plain dict with the same keys.
+    """
+    def _get(obj, key, default=""):
+        return (getattr(obj, key, None) or obj.get(key, default) if isinstance(obj, dict) else getattr(obj, key, None)) or default
+
+    name = _get(app, "name")
+    tagline = _get(app, "tagline")
+    genre = _get(app, "genre")
+    audience = _get(app, "target_audience")
+    description = _get(app, "description", "")
+    voice_profile = _get(app, "voice_profile") or {}
+
+    # Social proof from store data
+    raw = _get(app, "raw_store_data") or {}
+    rating = raw.get("rating")
+    review_count = raw.get("review_count")
+    recent_review = (raw.get("recent_reviews") or [{}])[0].get("text", "")
+
+    lines = [
+        f"APP CONTEXT — You are creating content to promote: {name}",
+    ]
+    if tagline:
+        lines.append(f"Tagline: {tagline}")
+    if genre:
+        lines.append(f"Genre: {genre}")
+    if audience:
+        lines.append(f"Target audience: {audience}")
+    if description:
+        lines.append(f"Key selling points: {description[:200]}")
+    if rating and review_count:
+        lines.append(f"Store rating: ⭐ {rating} stars · {review_count:,} reviews")
+    if recent_review:
+        lines.append(f'Top user review: "{recent_review[:120]}"')
+
+    # Brand voice constraints
+    if voice_profile:
+        tone = voice_profile.get("tone", "")
+        avoid = ", ".join(voice_profile.get("avoid_words", []))
+        cta = voice_profile.get("cta_style", "")
+        emojis = " ".join(voice_profile.get("preferred_emojis", []))
+        max_tags = voice_profile.get("max_hashtags", 8)
+        lines.append(
+            f"BRAND VOICE: Tone={tone}."
+            + (f" Never use: {avoid}." if avoid else "")
+            + (f" CTA style: {cta}." if cta else "")
+            + (f" Preferred emojis: {emojis}." if emojis else "")
+            + f" Max {max_tags} hashtags."
+        )
+
+    return "\n".join(lines)

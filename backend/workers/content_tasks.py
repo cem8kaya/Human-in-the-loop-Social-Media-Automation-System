@@ -7,10 +7,10 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
 
 from workers.celery_app import celery_app
 from models.database import SessionLocal
-from models.orm import Trend, Post, Analytics, SystemConfig
+from models.orm import App, Trend, Post, Analytics, SystemConfig
 from services.content_generator import generate_content_variations
 from services.media_generator import generate_text_image, generate_video_script_file
-from prompts.templates import SYSTEM_PROMPT, build_generation_prompt, VIRAL_FORMATS
+from prompts.templates import SYSTEM_PROMPT, build_generation_prompt, build_app_context, VIRAL_FORMATS
 from config import settings
 
 logger = logging.getLogger(__name__)
@@ -89,7 +89,7 @@ def _get_config(db, key: str, default):
 
 
 @celery_app.task(name="workers.content_tasks.generate_posts_for_trend", bind=True, max_retries=3)
-def generate_posts_for_trend(self, trend_id: int, viral_format: str | None = None):
+def generate_posts_for_trend(self, trend_id: int, viral_format: str | None = None, app_id: int | None = None):
     """Generate 3 post variations for a given trend_id, auto-approving when autopilot is on."""
     db = SessionLocal()
     try:
@@ -105,10 +105,18 @@ def generate_posts_for_trend(self, trend_id: int, viral_format: str | None = Non
         chosen_format = viral_format or random.choice(VIRAL_FORMAT_KEYS)
         user_prompt = build_generation_prompt(trend.topic, trend.source, chosen_format)
 
+        # Inject app context into the system prompt when an app is linked
+        system_prompt = SYSTEM_PROMPT
+        app = None
+        if app_id:
+            app = db.query(App).filter(App.id == app_id, App.is_active == True).first()
+            if app:
+                system_prompt = f"{SYSTEM_PROMPT}\n\n{build_app_context(app)}"
+
         variations = generate_content_variations(
             topic=trend.topic,
             source=trend.source,
-            system_prompt=SYSTEM_PROMPT,
+            system_prompt=system_prompt,
             user_prompt=user_prompt,
             ollama_base_url=settings.ollama_base_url,
             ollama_model=settings.ollama_model,
@@ -143,6 +151,7 @@ def generate_posts_for_trend(self, trend_id: int, viral_format: str | None = Non
 
             post = Post(
                 trend_id=trend_id,
+                app_id=app_id,
                 hook=hook,
                 script=v.get("script", ""),
                 caption=v.get("caption", ""),

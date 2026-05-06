@@ -12,7 +12,7 @@ from pathlib import Path
 from config import settings
 from models.database import engine
 from models.orm import Base
-from api.routes import trends, posts, analytics, accounts, config as config_routes, schedule as schedule_routes
+from api.routes import trends, posts, analytics, accounts, config as config_routes, schedule as schedule_routes, apps as apps_routes
 
 
 @asynccontextmanager
@@ -49,6 +49,7 @@ app.include_router(analytics.router, prefix="/api/v1")
 app.include_router(accounts.router, prefix="/api/v1")
 app.include_router(config_routes.router, prefix="/api/v1")
 app.include_router(schedule_routes.router, prefix="/api/v1")
+app.include_router(apps_routes.router, prefix="/api/v1")
 
 
 @app.get("/health")
