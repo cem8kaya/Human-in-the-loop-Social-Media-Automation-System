@@ -48,6 +48,58 @@ VIRAL_FORMATS = {
             "The app you didn't know you needed:",
         ],
     },
+
+    # ── App-promotion formats (Phase 2, Item 6) ───────────────────────────
+    "app_launch": {
+        "name": "App Launch Story",
+        "description": "Founder-to-founder storytelling about shipping a real product",
+        "hook_starters": [
+            "I just shipped [App Name]. Here's everything I built in [X] days and what I learned.",
+            "After [X] months of nights and weekends, I finally launched.",
+            "We went from 0 to launch in [X] days. Here's the whole story.",
+            "I shipped my first app. It took [X] days and almost broke me.",
+        ],
+    },
+    "social_proof": {
+        "name": "Social Proof Milestone",
+        "description": "Turn real user numbers into shareworthy content",
+        "hook_starters": [
+            "10,000 people downloaded [App] this week. Here's the ONE feature they all talked about.",
+            "We hit [N] users and I had to share what they're saying.",
+            "⭐ [rating] stars. [N] reviews. Here's the feedback that shocked me most.",
+            "Real users. Real results. Here's what happened when [N] people tried [App].",
+        ],
+    },
+    "update_reveal": {
+        "name": "Update Reveal",
+        "description": "Build anticipation for a new feature or app version drop",
+        "hook_starters": [
+            "Major update just dropped for [App]. Most people won't notice the biggest change.",
+            "Version [X] is live. The changelog doesn't tell the full story.",
+            "We just shipped the update everyone asked for. Here's what actually changed.",
+            "I rewrote [X] from scratch in the new update. Here's why.",
+        ],
+    },
+    "behind_the_scenes": {
+        "name": "Behind the Scenes / Build in Public",
+        "description": "Raw developer journey content that builds authentic connection",
+        "hook_starters": [
+            "Day [N] building [App] in public. Here's what almost killed the project.",
+            "I almost gave up on [App] last week. Here's what changed.",
+            "Nobody shows you this part of indie dev. Here's what day [N] really looks like.",
+            "The unglamorous truth about building [App] solo.",
+        ],
+    },
+    "competitor_comparison": {
+        "name": "Competitor Comparison",
+        "description": "Position the app against alternatives through honest, helpful comparison",
+        "hook_starters": [
+            "I compared 5 [genre] apps so you don't have to. Honest ranking inside.",
+            "Everyone recommends [Competitor]. I tried [App] instead. Here's the difference.",
+            "Stop paying for [Competitor]. [App] does everything it does for free.",
+            "[Competitor] vs [App]: I spent [X] days testing both. The winner surprised me.",
+        ],
+    },
 }
 
 
