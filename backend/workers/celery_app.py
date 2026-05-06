@@ -15,6 +15,7 @@ celery_app = Celery(
         "workers.content_tasks",
         "workers.publish_tasks",
         "workers.analytics_tasks",
+        "workers.notification_tasks",
     ],
 )
 
@@ -42,5 +43,13 @@ celery_app.conf.beat_schedule = {
     "refresh-analytics-every-hour": {
         "task": "workers.analytics_tasks.refresh_all_analytics",
         "schedule": crontab(minute=30),
+    },
+    "daily-digest-0900-utc": {
+        "task": "workers.notification_tasks.send_daily_digest",
+        "schedule": crontab(hour=9, minute=0),
+    },
+    "check-stale-reviews-every-30m": {
+        "task": "workers.notification_tasks.check_stale_reviews",
+        "schedule": crontab(minute="*/30"),
     },
 }
