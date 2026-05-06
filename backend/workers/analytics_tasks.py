@@ -40,6 +40,18 @@ def refresh_post_analytics(self, post_id: int):
         analytics.raw_data = raw
         analytics.fetched_at = datetime.utcnow()
         db.commit()
+
+        # Feed engagement data into the posting-schedule learner
+        if post.posted_at:
+            from services.posting_schedule import update_posting_performance
+            update_posting_performance(
+                platform=post.platform,
+                hour_of_day=post.posted_at.hour,
+                engagement_score=score,
+                account_id=post.account_id,
+                db=db,
+            )
+
         return {"post_id": post_id, "engagement_score": score}
     except Exception as exc:
         db.rollback()
