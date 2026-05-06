@@ -99,6 +99,16 @@ def app_stats(app_id: int, db: Session = Depends(get_db)):
     }
 
 
+@router.post("/apps/{app_id}/refresh-store-data", status_code=202, summary="Trigger immediate App Store / Play Store data refresh")
+def refresh_store(app_id: int, db: Session = Depends(get_db)):
+    app = db.query(App).filter(App.id == app_id).first()
+    if not app:
+        raise HTTPException(status_code=404, detail="App not found")
+    from workers.appstore_tasks import refresh_store_data
+    task = refresh_store_data.delay(app_id)
+    return {"app_id": app_id, "task_id": task.id, "message": "Store refresh queued"}
+
+
 @router.post("/apps/{app_id}/generate-campaign", status_code=202, summary="Generate promo posts for all active trends")
 def generate_campaign(
     app_id: int,

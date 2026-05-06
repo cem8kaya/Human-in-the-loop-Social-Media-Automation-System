@@ -16,6 +16,7 @@ celery_app = Celery(
         "workers.publish_tasks",
         "workers.analytics_tasks",
         "workers.notification_tasks",
+        "workers.appstore_tasks",
     ],
 )
 
@@ -51,5 +52,9 @@ celery_app.conf.beat_schedule = {
     "check-stale-reviews-every-30m": {
         "task": "workers.notification_tasks.check_stale_reviews",
         "schedule": crontab(minute="*/30"),
+    },
+    "refresh-store-data-daily-0500": {
+        "task": "workers.appstore_tasks.refresh_all_store_data",
+        "schedule": crontab(hour=5, minute=0),
     },
 }
