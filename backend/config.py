@@ -30,15 +30,33 @@ class Settings(BaseSettings):
 
     # Publisher tokens (optional)
     instagram_access_token: Optional[str] = None
+    instagram_user_id: Optional[str] = None
     twitter_api_key: Optional[str] = None
     twitter_api_secret: Optional[str] = None
     twitter_access_token: Optional[str] = None
     twitter_access_token_secret: Optional[str] = None
 
+    # TikTok Content Posting API v2 (optional)
+    tiktok_client_key: Optional[str] = None
+    tiktok_client_secret: Optional[str] = None
+    tiktok_access_token: Optional[str] = None
+
+    # Telegram notifications (optional — falls back to email)
+    telegram_bot_token: Optional[str] = None
+    telegram_chat_id: Optional[str] = None
+
+    # Email / SMTP notifications (optional fallback)
+    smtp_host: str = "smtp.gmail.com"
+    smtp_port: int = 587
+    smtp_user: Optional[str] = None
+    smtp_password: Optional[str] = None
+    notify_email_to: Optional[str] = None
+
     # App
     app_env: str = "development"
     secret_key: str = "change-me-in-production"
     cors_origins: str = "http://localhost:3000"
+    base_url: str = "http://localhost:8000"   # used for approve links in digest
 
     class Config:
         env_file = ".env"

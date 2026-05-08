@@ -3,7 +3,7 @@ Reusable, configurable prompt templates for viral content generation.
 Each template accepts a context dict and returns a formatted string.
 """
 
-from typing import Dict
+from typing import Any, Dict, Optional
 
 # ── Viral format definitions ───────────────────────────────────────────────
 
@@ -46,6 +46,58 @@ VIRAL_FORMATS = {
             "Nobody is talking about this game and I'm mad.",
             "Hidden gem alert:",
             "The app you didn't know you needed:",
+        ],
+    },
+
+    # ── App-promotion formats (Phase 2, Item 6) ───────────────────────────
+    "app_launch": {
+        "name": "App Launch Story",
+        "description": "Founder-to-founder storytelling about shipping a real product",
+        "hook_starters": [
+            "I just shipped [App Name]. Here's everything I built in [X] days and what I learned.",
+            "After [X] months of nights and weekends, I finally launched.",
+            "We went from 0 to launch in [X] days. Here's the whole story.",
+            "I shipped my first app. It took [X] days and almost broke me.",
+        ],
+    },
+    "social_proof": {
+        "name": "Social Proof Milestone",
+        "description": "Turn real user numbers into shareworthy content",
+        "hook_starters": [
+            "10,000 people downloaded [App] this week. Here's the ONE feature they all talked about.",
+            "We hit [N] users and I had to share what they're saying.",
+            "⭐ [rating] stars. [N] reviews. Here's the feedback that shocked me most.",
+            "Real users. Real results. Here's what happened when [N] people tried [App].",
+        ],
+    },
+    "update_reveal": {
+        "name": "Update Reveal",
+        "description": "Build anticipation for a new feature or app version drop",
+        "hook_starters": [
+            "Major update just dropped for [App]. Most people won't notice the biggest change.",
+            "Version [X] is live. The changelog doesn't tell the full story.",
+            "We just shipped the update everyone asked for. Here's what actually changed.",
+            "I rewrote [X] from scratch in the new update. Here's why.",
+        ],
+    },
+    "behind_the_scenes": {
+        "name": "Behind the Scenes / Build in Public",
+        "description": "Raw developer journey content that builds authentic connection",
+        "hook_starters": [
+            "Day [N] building [App] in public. Here's what almost killed the project.",
+            "I almost gave up on [App] last week. Here's what changed.",
+            "Nobody shows you this part of indie dev. Here's what day [N] really looks like.",
+            "The unglamorous truth about building [App] solo.",
+        ],
+    },
+    "competitor_comparison": {
+        "name": "Competitor Comparison",
+        "description": "Position the app against alternatives through honest, helpful comparison",
+        "hook_starters": [
+            "I compared 5 [genre] apps so you don't have to. Honest ranking inside.",
+            "Everyone recommends [Competitor]. I tried [App] instead. Here's the difference.",
+            "Stop paying for [Competitor]. [App] does everything it does for free.",
+            "[Competitor] vs [App]: I spent [X] days testing both. The winner surprised me.",
         ],
     },
 }
@@ -127,3 +179,60 @@ def build_improvement_prompt(topic: str, source: str, top_performers: str, low_p
         top_performers=top_performers,
         low_performers=low_performers,
     )
+
+
+# ── App context injection ──────────────────────────────────────────────────
+
+def build_app_context(app: Any) -> str:
+    """Return a prompt preamble that grounds content generation in a specific app.
+
+    Accepts either an ORM App instance or a plain dict with the same keys.
+    """
+    def _get(obj, key, default=""):
+        return (getattr(obj, key, None) or obj.get(key, default) if isinstance(obj, dict) else getattr(obj, key, None)) or default
+
+    name = _get(app, "name")
+    tagline = _get(app, "tagline")
+    genre = _get(app, "genre")
+    audience = _get(app, "target_audience")
+    description = _get(app, "description", "")
+    voice_profile = _get(app, "voice_profile") or {}
+
+    # Social proof from store data
+    raw = _get(app, "raw_store_data") or {}
+    rating = raw.get("rating")
+    review_count = raw.get("review_count")
+    recent_review = (raw.get("recent_reviews") or [{}])[0].get("text", "")
+
+    lines = [
+        f"APP CONTEXT — You are creating content to promote: {name}",
+    ]
+    if tagline:
+        lines.append(f"Tagline: {tagline}")
+    if genre:
+        lines.append(f"Genre: {genre}")
+    if audience:
+        lines.append(f"Target audience: {audience}")
+    if description:
+        lines.append(f"Key selling points: {description[:200]}")
+    if rating and review_count:
+        lines.append(f"Store rating: ⭐ {rating} stars · {review_count:,} reviews")
+    if recent_review:
+        lines.append(f'Top user review: "{recent_review[:120]}"')
+
+    # Brand voice constraints
+    if voice_profile:
+        tone = voice_profile.get("tone", "")
+        avoid = ", ".join(voice_profile.get("avoid_words", []))
+        cta = voice_profile.get("cta_style", "")
+        emojis = " ".join(voice_profile.get("preferred_emojis", []))
+        max_tags = voice_profile.get("max_hashtags", 8)
+        lines.append(
+            f"BRAND VOICE: Tone={tone}."
+            + (f" Never use: {avoid}." if avoid else "")
+            + (f" CTA style: {cta}." if cta else "")
+            + (f" Preferred emojis: {emojis}." if emojis else "")
+            + f" Max {max_tags} hashtags."
+        )
+
+    return "\n".join(lines)

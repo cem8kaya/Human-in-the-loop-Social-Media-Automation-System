@@ -17,3 +17,14 @@ apscheduler==3.10.4
 pillow==10.3.0
 pytest==8.2.0
 pytest-asyncio==0.23.7
+# Notification channels
+python-telegram-bot==21.3
+# Social platform publishing
+tweepy==4.14.0
+google-play-scraper==1.2.4
+# Security / encryption
+cryptography==42.0.8
+# Rate limiting
+slowapi==0.1.9
+# ML scoring
+scikit-learn==1.5.0
